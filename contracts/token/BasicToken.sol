@@ -14,7 +14,7 @@ contract BasicToken {
   event Transfer(address indexed from, address indexed to, uint256 value);
   mapping(address => uint256) balances;
 
-  uint256 public totalSupply_;
+  uint256 public totalSupply_ = 0;
 
   /**
   * @dev Total number of tokens in existence
