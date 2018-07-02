@@ -35,7 +35,7 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount)
-    //hasMintPermission
+    // hasMintPermission
     canMint
     public
     returns (bool)

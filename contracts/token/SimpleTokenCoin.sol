@@ -11,7 +11,7 @@ contract SimpleTokenCoin is MintableToken {
     constructor () public {
         name = "Crypto Iluha Coin";
         symbol = "CIC";
-        decimals = 18;
+        decimals = 0;
     }
 
     function viewToken () public view returns (string, string, uint8) {
