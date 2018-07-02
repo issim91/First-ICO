@@ -36,7 +36,7 @@ App = {
           App.contracts.SimpleTokenCoin.setProvider(App.web3Provider);
           App.contracts.SimpleTokenCoin.deployed().then(function(simpleTokenCoin) {
             App.TokenAddress = simpleTokenCoin.address;
-            console.log("Адрес контракта токена: "+simpleTokenCoin.address);
+            //console.log("Адрес контракта токена: "+simpleTokenCoin.address);
           });
         });
         App.listenForEvents();
@@ -104,8 +104,8 @@ App = {
         $('#whoOwnerNow').text("Адрес владельца контракта: " + whoOwner);
         $('#whoOwnerNow').attr("href", App.network + whoOwner);
 
-        $('#whoTokenAddress').text("Адрес контракта токена: " + App.TokenAddress);
-        $('#whoTokenAddress').attr("href", App.networkToken + App.TokenAddress);
+        $('#whoTokenAddress').text("Адрес контракта токена: " + App.CrowdsaleAddress);
+        $('#whoTokenAddress').attr("href", App.networkToken + App.CrowdsaleAddress);
 
       return TokenInstance.viewISO();
     }).then(function(viewISO) {
