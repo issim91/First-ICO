@@ -272,7 +272,7 @@ App = {
     loader.show();
     content.hide();
     var CrowdsaleToken = $('#CrowdsaleToken').val();
-    App.Crowdsale.sendTransaction({from:App.account, value:web3.toWei(CrowdsaleToken, "ether"), gasPrice: 1000}).then(function() {
+    App.Crowdsale.sendTransaction({from:App.account, value:web3.toWei(CrowdsaleToken, "ether"), gasPrice:'default'}).then(function() {
       console.log("Токены покупаются!");
       App.Event = true;
       $('form').trigger('reset');
