@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title> Crowdsale Crypto Iluha Coin </title>
+
+    <!-- Bootstrap -->
+    <!-- <link href="css/bootstrap.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+  </head>
+
+  <body>
+  <h4 class="text-center">ISO в тестовой сети Ropsten</h4>
+  <div id="loader">
+      <p class="text-center">Loading....</p>
+  </div>
+  <div style="display:none" class="alert alert-success">
+      <p id="success" class="text-center"></p>
+  </div>
+  <div class="container" id="content">
+    <div class="row">
+      <section class='col-sm-12 mb-4 card'>
+        <span>Текущий аккаунт: <a id='wallet' target="_blank"></a></span>
+        <span>Количество токенов на аккаунте: <a id='walletBal'></a> <span id='TokenSymbol'></span></span>
+      </section>
+
+      <section class='col-sm-6 mb-4 card'>
+          <h2 class="text-center">Информация о токене</h2>
+          <a>Общее количество токенов: <span id='AllToken'></span> <span id='TokenSymbol'></span> </a>
+          <a>Полное название токена: <span id='TokenName'></span></a>
+          <a>Количество знаков после запятой: <span id='TokenDecimals'></span></a>
+          <a>Адрес владельца контракта: <a id='whoOwnerNow' target="_blank"></a></a>
+          <a>Адрес администратора контракта: <a id='whoAdminNow' target="_blank"></a></a>
+          <a>Адрес контракта токена: <a id='whoTokenAddress' target="_blank"></a></a>
+      </section>
+
+      <section class='col-sm-6 mb-4 card'>
+          <h2 class="text-center">Информация об ISO</h2>
+          <div id="endTimeIso">
+            <p>До конца ISO осталось</p>
+            Дни: <span class="days"></span>
+            Часы: <span class="hours"></span>
+            Минуты: <span class="minutes"></span>
+            Секунды: <span class="seconds"></span>
+          </div>
+          <a>Бонус токенов: <span id='bonusTokensView'></span> %</a>
+          <input id='bonusTokens' hidden=true>
+          <a>Hardcap: <span id='hardcapValue'></span> ETH</a>
+          <a>Собрано денег в ходе ISO: <span id='multisigValue'></span> ETH</a>
+          <a>1 токен = <span id='Rate'></span> ETH</a>
+          <a>Процент токенов для команды ISO: <span id='restrictedPercentValue'></span> %</a>
+          <input id='RateVal' hidden=true>
+          <span>Адрес куда капает эфир с ISO: <a id='whoMultisig' target="_blank"></a></span>
+          <input id='whoMultisigAdrr' hidden=true>
+          <span>Адрес куда будут перечисляться токены для нужд команды ISO: <a id='whoRestricted' target="_blank"></a></span>
+      </section>
+  
+      <section class='mb-4 card text-center p-3' style="width: 400px; max-width: 100%; margin: 20px auto; margin-top: 0;">
+        
+        <h2 class="text-center">Crowdsale</h2>
+        <div class='inp-block'>
+          <div class='inp-group text-center'>
+              <div class="input-group mb-3">
+                  <input id='CrowdsaleToken' oninput="tokenConvert(this.value)" onchange="tokenConvert(this.value)" type="text" class="form-control Convert" placeholder="Введите сумму в ETH" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                  <div class="input-group-append">
+                    <span class="input-group-text" id="basic-addon2" style="width: 80px;">ETH</span>
+                  </div>
+              </div>
+            <div class="input-group mb-3">
+                <input name='CrowdsaleTokenETH' id='CrowdsaleTokenETH' oninput="tokenConvertEth(this.value)" onchange="tokenConvertEth(this.value)" type="text" class="form-control Convert" placeholder="Колличество токенов" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                <div class="input-group-append">
+                  <span class="input-group-text TokenSymbol" id="basic-addon2" style="width: 80px;">Токен</span>
+                </div>
+            </div>
+            <div class="input-group mb-3" id='CrowdsaleBonusTokenDiv'>
+              <input name='CrowdsaleBonusToken' readonly id='CrowdsaleBonusToken' type="text" class="form-control Convert" placeholder="Колличество бонусов" aria-label="Recipient's username" aria-describedby="basic-addon2">
+              <div class="input-group-append">
+                <span class="input-group-text" id="basic-addon2" style="width: 80px;">Бонус</span>
+              </div>
+          </div>
+          </div>
+          <button onclick="App.CrowdSale();" class="btn btn-primary" id='CrowdsaleSendToken'>Купить Токены</button>
+          <br>
+        </div> 
+      
+      </section>
+
+      <div class="clearfix col-sm-12" style="clear: both"></div>
+      
+      <section class='col-sm-6 mb-4 card p-3'>
+        <h3 class="text-center"> Проверка баланса</h3>
+        <input class="mb-3" id='newAdrr' style="width: 100%;" placeholder="Введите адрес кошелька">
+        <button onclick="App.Balance();" class="btn btn-primary" id='but'>Узнать баланс</button>
+        <br>
+        <span id='bal'> </span>
+      </section>
+      
+      
+      <section class='col-sm-6 mb-4 card p-3'>
+        <h3 class="text-center">Отправка токенов</h3>
+          <input class="mb-3" id='toSend' style="width: 100%;" placeholder="Введите адрес кошелька, куда передать токены">
+          <input class="mb-3" id='valueToken' style="width: 100%;" placeholder="Введите количество токенов">
+          <button onclick="App.SendToken();" class="btn btn-primary" id='sendToken' >Отправить Токены</button>
+      </section>
+      
+
+      <div class="clearfix"></div>
+      <section class='col-sm-12 mb-4 card p-3'>
+        <div>
+
+        <h3 class="text-center">Передача управления токенами</h3>
+
+        <div class="row">
+        <section class='col-sm-6 mb-4 card p-3'>
+            <h3 class="text-center">Передача управления токенами</h3>
+              <input class="mb-3" id='approveSpender' style="width: 100%;" placeholder="Введите адрес кошелька, каму предоставляется доступ">
+              <input class="mb-3" id='approveValue' style="width: 100%;" placeholder="Введите количество монет, которое можно будет передавать">
+              <button onclick="App.Approv();" class="btn btn-primary" id='sendApprove' >Передать управление</button>
+        </section>
+
+        <section class='col-sm-6 mb-4 card p-3'>
+            <h3 class="text-center">Узнать сколько токенов в управлении</h3>
+              <input class="mb-3" id='approveMoney' style="width: 100%;" placeholder="Введите адрес кошелька, каму предоставлен доступ к токенам">
+              <button onclick="App.ApprovMoney();" class="btn btn-primary" id='sendApproveMoney' >Узнать</button>
+              <span id='resultApproveMoney'></span>
+        </section>
+
+        <section class='col-sm-6 mb-4 card p-3'>
+          <h3 class="text-center">Передать чужие токены</h3>
+            <input class="mb-3" id='transferFrom' style="width: 100%;" placeholder="Введите адрес кошелька, откуда передать токены">
+            <input class="mb-3" id='transferTo' style="width: 100%;" placeholder="Введите адрес кошелька, каму передать токены">
+            <input class="mb-3" id='transferFromValue' style="width: 100%;" placeholder="Введите количество монет, которое нужно передать">
+            <button onclick="App.SendTransferFrom();" class="btn btn-primary" id='sendTransferFrom' >Передать токены</button>
+      </section>
+
+      
+      <section class='col-sm-6 mb-4 card p-3'>
+          <h3 class="text-center">Увеличить лимит монет на управление токенами</h3>
+            <input class="mb-3" id='upLimitApproveSpender' style="width: 100%;" placeholder="Введите адрес кошелька, каму предоставляется доступ">
+            <input class="mb-3" id='upLimitApproveValue' style="width: 100%;" placeholder="Введите количество монет, на сколько увеличить лимит">
+            <button onclick="App.UpLimitApprove();" class="btn btn-primary" id='sendUpLimitApprove' >Увеличить лимит</button>
+      </section>
+
+      <section class='col-sm-6 mb-4 card p-3'>
+          <h3 class="text-center">Уменьшить лимит монет на управление токенами</h3>
+            <input class="mb-3" id='downLimitApproveSpender' style="width: 100%;" placeholder="Введите адрес кошелька, каму предоставляется доступ">
+            <input class="mb-3" id='downLimitApproveValue' style="width: 100%;" placeholder="Введите количество монет, на сколько уменьшить лимит">
+            <button onclick="App.DownLimitApprove();" class="btn btn-primary" id='sendDownLimitApprove' >Уменьшить лимит</button>
+      </section>
+
+    </div>
+    </div>
+    </section> 
+
+      <div class="clearfix"></div>
+      <section class='col-sm-12 mb-4 card p-3'>
+      <div id='owner'>
+        <h2 class="text-center">ПАНЕЛЬ АДМИНИСТРАТОРА</h2>
+        <div class="row">
+
+          <div class='col-sm-6 mb-4 card'>
+            <h3 class="text-center">Создание монет</h3>
+            <input class="mb-3" id='toMint' style="width: 100%;" placeholder="Введите адрес кошелька, куда начеканить токены">
+            <input class="mb-3" id='valueMint' style="width: 100%;" placeholder="Введите количество монет">
+            <button onclick="App.Mint();" class="btn btn-primary" id='mintToken'>НАЧЕКАНИТЬ</button>
+          </div> 
+
+          <div class='col-sm-6 mb-4 card'> 
+            <h3 class="text-center">Изменение коэффициента пересчета эфира</h3>
+            <br>
+            <input class="mb-3" id='newRate' style="width: 100%">
+            <button onclick="App.EditRate();"  class="btn btn-primary" id='editRateButton'>ИЗМЕНИТЬ</button>
+          </div>
+
+          <div class='col-sm-6 mb-4 card'> 
+              <h3 class="text-center">Изменение Владельца контракта</h3>
+              <br>
+              <input class="mb-3" id='newOwner' style="width: 100%" placeholder="Введите адрес кошелька нового владельца">
+              <button onclick="App.EditOwner();"  class="btn btn-primary" id='editOwnerButton'>ИЗМЕНИТЬ</button>
+          </div>
+
+          <div class='col-sm-6 mb-4 card'> 
+              <h3 class="text-center">Изменение границы сбора средств ISO</h3>
+              <br>
+              <div class="input-group mb-3">
+                <input id='newHardcap' type="text" class="form-control Convert" placeholder="Введите сумму в ETH" aria-label="Введите сумму в ETH" aria-describedby="basic-addon2">
+                <div class="input-group-append">
+                  <span class="input-group-text" id="basic-addon2" style="width: 80px;">ETH</span>
+                </div>
+            </div>
+              <button onclick="App.EditHardcap();" class="btn btn-primary" id='editHardcapButton'>ИЗМЕНИТЬ</button>
+          </div>
+
+        <div class='col-sm-6 mb-4 card'> 
+            <h3 class="text-center">Изменение адреса куда деньги поступают с ISO</h3>
+            <br>
+            <input class="mb-3" id='newMultisig' style="width: 100%" placeholder="Введите адрес кошелька">
+            <button onclick="App.EditMultisig();" class="btn btn-primary" id='editMultisigrButton'>ИЗМЕНИТЬ</button>
+        </div>
+
+        <div class='col-sm-6 mb-4 card'> 
+            <h3 class="text-center">Увеличить период проведения ISO</h3>
+            <br>
+            <input class="mb-3" id='newPeriod' style="width: 100%" placeholder="Введите количество дней">
+            <button onclick="App.EditPeriod();" class="btn btn-primary" id='editPeriodButton'>ИЗМЕНИТЬ</button>
+        </div>
+
+        <div class='col-sm-6 mb-4 card'>
+
+        <div class='d-flex align-items-center justify-content-center' style="height: 100%;">
+          <button onclick="App.FinishMint();"class="btn btn-danger" id='finishMint' style="width: 100%">Закончить ISO</button>
+        </div>
+        </div>
+
+        </div>
+      </div>
+      </section>
+  </div>  
+  </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script> -->
+
+    <script src="js/web3.min.js"></script>
+    <script src="js/truffle-contract.js"></script>
+    <script src="js/app.js"></script>
+  
+  </body>
+</html>
