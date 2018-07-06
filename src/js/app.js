@@ -243,7 +243,7 @@ App = {
     content.hide();
     var toSend = $('#toMint').val();
     var valueToken = $('#valueMint').val();
-    App.SimpleTokenCoin.mint(toSend, valueToken, {from:App.account}).then(function() {
+    App.SimpleTokenCoin.mint(toSend, valueToken, {from:App.account, gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Токены чеканятся");
       App.Event = true;
       $('input').val('');
@@ -258,7 +258,7 @@ App = {
     content.hide();
     var toSend = $('#toSend').val();
     var valueToken = $('#valueToken').val();
-    App.SimpleTokenCoin.transfer(toSend, valueToken, {from:App.account}).then(function() {
+    App.SimpleTokenCoin.transfer(toSend, valueToken, {from:App.account, gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Токены отправляются");
       App.Event = true;
       $('input').val('');
@@ -287,7 +287,7 @@ App = {
     loader.show();
     content.hide();
     var newRate = $('#newRate').val();
-    App.Crowdsale.rateEdit(newRate).then(function() {
+    App.Crowdsale.rateEdit(newRate, {gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Rate изменен");
       App.Event = true;
       $('input').val('');
@@ -301,7 +301,7 @@ App = {
     loader.show();
     content.hide();
     var newOwner = $('#newOwner').val();
-    App.SimpleTokenCoin.transferOwnership(newOwner).then(function() {
+    App.SimpleTokenCoin.transferOwnership(newOwner, {gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Владелец меняется");
       App.Event = true;
       $('input').val('');
@@ -315,7 +315,7 @@ App = {
     loader.show();
     content.hide();
     var newHardcap = $('#newHardcap').val();
-    App.Crowdsale.hardcapEdit(web3.toWei(newHardcap, "ether")).then(function() {
+    App.Crowdsale.hardcapEdit(web3.toWei(newHardcap, "ether"), {gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("HacdCap меняется");
       App.Event = true;
       $('input').val('');
@@ -329,7 +329,7 @@ App = {
     loader.show();
     content.hide();
     var newMultisig = $('#newMultisig').val();
-    App.Crowdsale.multisigEdit(newMultisig).then(function(result) {
+    App.Crowdsale.multisigEdit(newMultisig, {gasPrice:web3.toWei("50", "gwei")}).then(function(result) {
       console.log("Адрес меняется");
       App.Event = true;
       $('input').val('');
@@ -344,7 +344,7 @@ App = {
     content.hide();
     var approveSpender = $('#approveSpender').val();
     var approveValue = $('#approveValue').val();
-    App.SimpleTokenCoin.approve(approveSpender, approveValue, {from:App.account}).then(function() {
+    App.SimpleTokenCoin.approve(approveSpender, approveValue, {from:App.account, gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Управление токенами передается");
       App.Event = true;
       $('input').val('');
@@ -354,7 +354,7 @@ App = {
 
   ApprovMoney: function() {
     var approveSpender = $('#approveMoney').val();
-    App.SimpleTokenCoin.allowance(App.account, approveSpender).then(function(result) {
+    App.SimpleTokenCoin.allowance(App.account, approveSpender, {gasPrice:web3.toWei("50", "gwei")}).then(function(result) {
       $('#resultApproveMoney').text("В управлении - " + result + " " + App.TokenSymbol);
     });
   },
@@ -367,7 +367,7 @@ App = {
     var fromSend = $('#transferFrom').val();  
     var toSend = $('#transferTo').val();
     var valueToken = $('#transferFromValue').val(); 
-    App.SimpleTokenCoin.transferFrom(fromSend, toSend, valueToken, {from:App.account}).then(function() {
+    App.SimpleTokenCoin.transferFrom(fromSend, toSend, valueToken, {from:App.account, gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Монеты отправляются");
       App.Event = true;
       $('input').val('');
@@ -382,7 +382,7 @@ App = {
     content.hide();
     var approveSpender = $('#upLimitApproveSpender').val();
     var approveValue = $('#upLimitApproveValue').val();
-    App.SimpleTokenCoin.increaseApproval(approveSpender, approveValue, {from:App.account}).then(function() {
+    App.SimpleTokenCoin.increaseApproval(approveSpender, approveValue, {from:App.account, gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Лимит увеличивается");
       App.Event = true;
       $('input').val('');
@@ -397,7 +397,7 @@ App = {
     content.hide();
     var approveSpender = $('#downLimitApproveSpender').val();
     var approveValue = $('#downLimitApproveValue').val();
-    App.SimpleTokenCoin.decreaseApproval(approveSpender, approveValue, {from:App.account}).then(function() {
+    App.SimpleTokenCoin.decreaseApproval(approveSpender, approveValue, {from:App.account, gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("Лимит уменьшается");
       App.Event = true;
       $('input').val('');
@@ -411,7 +411,7 @@ App = {
     loader.show();
     content.hide();
     var newPeriod = $('#newPeriod').val();
-    App.Crowdsale.upPeriodEdit(newPeriod).then(function(result) {
+    App.Crowdsale.upPeriodEdit(newPeriod, {gasPrice:web3.toWei("50", "gwei")}).then(function(result) {
       console.log("Период меняется");
       App.Event = true;
       $('input').val('');
@@ -424,7 +424,7 @@ App = {
     var content = $('#content');
     loader.show();
     content.hide();
-    App.Crowdsale.finishMint().then(function() {
+    App.Crowdsale.finishMint({gasPrice:web3.toWei("50", "gwei")}).then(function() {
       console.log("ISO Закончилось!");
       App.Event = true;
       App.FinishMint = true;
