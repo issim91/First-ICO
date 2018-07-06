@@ -4,10 +4,14 @@ App = {
   account: "0x0",
   TokenSymbol: "Token",
   loading: false,
+  Event: false,
   network: 'http://ropsten.etherscan.io/address/',
   networkToken: 'http://ropsten.etherscan.io/token/',
   CrowdsaleAddress: "0x0",
   TokenAddress: "0x0",
+  SimpleTokenCoin: null,
+  Crowdsale: null,
+  FinishMint: false,
 
 
   initWeb3: function() {
@@ -26,35 +30,97 @@ App = {
     $.getJSON('Crowdsale.json', function(crowdsale) {
       App.contracts.Crowdsale = TruffleContract(crowdsale);
       App.contracts.Crowdsale.setProvider(App.web3Provider);
-      App.contracts.Crowdsale.deployed().then(function(instance){
-        App.CrowdsaleAddress = instance.address;
-        console.log("Адрес контракта распродажи токенов: "+instance.address);
+      App.contracts.Crowdsale.deployed().then(function(crowdsale){
+        App.Crowdsale = crowdsale;
+        App.CrowdsaleAddress = crowdsale.address;
+        console.log("Адрес контракта распродажи токенов: "+App.CrowdsaleAddress);
       });
     }).done(function() {
         $.getJSON('SimpleTokenCoin.json', function(simpleTokenCoin) {
           App.contracts.SimpleTokenCoin = TruffleContract(simpleTokenCoin);
           App.contracts.SimpleTokenCoin.setProvider(App.web3Provider);
           App.contracts.SimpleTokenCoin.deployed().then(function(simpleTokenCoin) {
+            App.SimpleTokenCoin = simpleTokenCoin;
             App.TokenAddress = simpleTokenCoin.address;
             console.log("Адрес контракта токена: "+simpleTokenCoin.address);
           });
+          App.listenForEvents();
+          return App.initAll();
         });
-        App.listenForEvents();
-      return App.initAll();
       });
-      
   },
 
   listenForEvents: function() {
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      instance.Sell({}, {
+    App.contracts.Crowdsale.deployed().then(function(_Sell) {
+      _Sell.Sell({}, {
         fromBlock: 0,
         toBlock: 'latest',
       }).watch(function(error, event){
-        console.log("event Trigger: ", event)
+        console.log("event Crowdsale: ", event);
         App.initAll();
-      })
+      });
     });
+
+    App.contracts.SimpleTokenCoin.deployed().then(function(_Mint) {
+      _Mint.Mint({}, {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }).watch(function(error, event){
+        console.log("event Mint: ", event);
+        App.initAll();
+      });
+    });
+
+    App.contracts.SimpleTokenCoin.deployed().then(function(_Transfer){
+      _Transfer.Transfer({}, {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }).watch(function(error, event){
+        console.log("event Transfer: ", event);
+        App.initAll();
+      });
+    });
+
+    App.contracts.Crowdsale.deployed().then(function(_editIso) {
+      _editIso.EditIso({}, {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }).watch(function(error, event){
+        console.log("event Edit Iso: ", event);
+        App.initAll();
+      });
+    });
+
+    App.contracts.SimpleTokenCoin.deployed().then(function(_editOwner) {
+      _editOwner.OwnershipTransferred({}, {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }).watch(function(error, event){
+        console.log("event Edit Owner: ", event);
+        App.initAll();
+      });
+    });
+
+    App.contracts.SimpleTokenCoin.deployed().then(function(Approv) {
+      Approv.Approval({}, {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }).watch(function(error, event){
+        console.log("event Approv: ", event);
+        App.initAll();
+      });
+    });
+
+    App.contracts.SimpleTokenCoin.deployed().then(function(_MintFinished) {
+      _MintFinished.MintFinished({}, {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }).watch(function(error, event){
+        console.log("event Mint Finished: ", event);
+        App.initAll();
+      });
+    });
+
   },
 
   initAll: function() {
@@ -64,270 +130,305 @@ App = {
     App.loading = true;
     var loader =  $('#loader');
     var content = $('#content');
-
     loader.show();
     content.hide();
+    if (App.FinishMint == true)
+    {
+      $('#CrowdsaleForm').hide()
+    }
 
     web3.eth.getAccounts(function(error, accounts) {
       if (error) {
         console.log(error);
       }
       App.account = accounts[0];
-    })
+    });
 
-
-    App.contracts.Crowdsale.deployed().then(function(instance) {
+    App.contracts.SimpleTokenCoin.deployed().then(function(instance) {
       TokenInstance = instance;
-      return TokenInstance.viewToken();
+      return App.SimpleTokenCoin.viewToken();
     }).then(function(viewToken) {
-      $('#TokenName').text("Полное название токена: " + viewToken[0]);
+      $('#TokenName').text(viewToken[0]);
       App.TokenSymbol = viewToken[1];
       $('.TokenSymbol').text(App.TokenSymbol);
-      $('#TokenSymbol').text("Символ токена: " + App.TokenSymbol);
-      $('#TokenDecimals').text("Количество знаков после запятой: " + viewToken[2]);
+      $('#TokenSymbol').text(App.TokenSymbol);
+      $('#TokenDecimals').text(viewToken[2]);
 
-      return TokenInstance.totalSupply();
+      return App.SimpleTokenCoin.totalSupply();
     }).then(function(totalSupply) {
-      $('#AllToken').text("Общее количество токенов: " + totalSupply + " " + App.TokenSymbol);
+      $('#AllToken').text(totalSupply);
 
-      return TokenInstance.balanceOf(App.account)
+      return App.SimpleTokenCoin.balanceOf(App.account)
     }).then(function(balanceOf) {
-      $('#wallet').text("Текущий аккаунт: " + App.account);
+      $('#wallet').text(App.account);
       $('#wallet').attr("href", App.network + App.account);
-      $('#walletBal').text("Количество токенов на аккаунте: "+balanceOf + " " + App.TokenSymbol);
+      $('#walletBal').text(balanceOf);
 
-      return TokenInstance.whoOwner();
+      return App.SimpleTokenCoin.whoOwner();
     }).then(function(whoOwner) {
-      if (whoOwner != App.account){
+      if (whoOwner[0] != App.account && whoOwner[1] != App.account){
         $('#owner').hide();
       }
-        $('#whoOwnerNow').text("Адрес владельца контракта: " + whoOwner);
-        $('#whoOwnerNow').attr("href", App.network + whoOwner);
+        $('#whoOwnerNow').text(whoOwner[0]);
+        $('#whoOwnerNow').attr("href", App.network + whoOwner[0]);
 
-        $('#whoTokenAddress').text("Адрес контракта токена: " + App.TokenAddress);
+        $('#whoAdminNow').text(whoOwner[1]);
+        $('#whoAdminNow').attr("href", App.network + whoOwner[1]);
+
+        $('#whoTokenAddress').text(App.TokenAddress);
         $('#whoTokenAddress').attr("href", App.networkToken + App.TokenAddress);
-
-      return TokenInstance.viewISO();
+    });
+    
+    App.contracts.Crowdsale.deployed().then(function(instance) {
+      return instance.viewISO();
     }).then(function(viewISO) {
       getEndTimeISO(viewISO[5], viewISO[6]);
       
       App.initBonusToken();
       var res = 1/viewISO[0];
-      $('#Rate').text("1 токен = "+ res + " ETH");
+      $('#Rate').text(res);
       $('#RateVal').val(viewISO[0]);
 
-      $('#hardcapValue').text("Hardcap: "+web3.fromWei(viewISO[2], "ether")+" ETH");
+      $('#hardcapValue').text(web3.fromWei(viewISO[2], "ether"));
 
-      $('#whoMultisig').text("Адрес куда капает эфир с ISO: " + viewISO[1]);
+      $('#whoMultisig').text(viewISO[1]);
       $('#whoMultisig').attr("href", App.network + viewISO[1]);
       $('#whoMultisigAdrr').val(viewISO[1]);
       var adrrMultisig = $('#whoMultisigAdrr').val(); 
       web3.eth.getBalance(adrrMultisig,(function (err, res) {
         var balance = web3.fromWei(res, "ether");
-        $('#multisigValue').text("Собрано денег в ходе ISO: "+balance.toString(10)+" ETH");
+        $('#multisigValue').text(balance.toString(10));
       })); 
 
-      $('#whoRestricted').text("Адрес куда будут перечисляться токены для нужд команды ISO: "+viewISO[3]);
+      $('#whoRestricted').text(viewISO[3]);
       $('#whoRestricted').attr("href", App.network + viewISO[3]);
 
-      $('#restrictedPercentValue').text("Процент токенов для команды ISO: "+viewISO[4]+"%");
+      $('#restrictedPercentValue').text(viewISO[4]);
     });
-
+  
+    $('#bal').text("");
     App.loading = false;
     loader.hide();
     content.show();
+
+    if (App.Event == true){
+      $('.alert-success').show();
+      $('.alert-success').delay(3000).fadeOut();
+      App.Event = false;
+    }
   },
 
   initBonusToken: function() {
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.viewBonusTokens();
-    }).then(function(result) {
+  App.Crowdsale.viewBonusTokens().then(function(result) {
       if (result == 0){
         $('#bonusTokensView').hide();
         $('#CrowdsaleBonusTokenDiv').hide();
       }
-        $('#bonusTokensView').text("Бонус токенов: "+result+" %");
+        $('#bonusTokensView').text(result);
         $('#bonusTokens').val(result);
-    }).catch(function(err) {
-      console.log(err.message);
     });
   },
 
-
-  initBalance: function() {
+  Balance: function() {
     var adrr = $('#newAdrr').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.balanceOf(adrr);
-    }).then(function(result) {
-      $('#bal').text("Баланс кошелька: "+result);
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.balanceOf(adrr).then(function(result) {
+      $('#bal').text("Баланс кошелька: " + result + " " + App.TokenSymbol);
     });
   },
 
-
-  initMint: function() {
-    var toSend = $('#toMint').val();
-    var valueToken = $('#valueMint').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.mint(toSend, valueToken, {from:App.account});
-    }).then(function(result) {
-      $('#success').text("Монеты успешно начеканены");
-    }).catch(function(err) {
-      console.log(err.message);
-  });
-},
-
-
-  initSendToken: function() {
-    var toSend = $('#toSend').val();
-    var valueToken = $('#valueToken').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.transfer(toSend, valueToken, {from:App.account});
-    }).then(function(result) {
-      $('#success').text("Монеты успешно отправлены");
-    }).catch(function(err) {
-      console.log(err.message);
-    });
-  },
-
-
-  initCrowdsale: function() {
+  Mint: function() {
     var loader =  $('#loader');
     var content = $('#content');
     loader.show();
     content.hide();
+    var toSend = $('#toMint').val();
+    var valueToken = $('#valueMint').val();
+    App.SimpleTokenCoin.mint(toSend, valueToken, {from:App.account}).then(function() {
+      console.log("Токены чеканятся");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Монеты успешно начеканены");
+    });
+},
 
+  SendToken: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
+    var toSend = $('#toSend').val();
+    var valueToken = $('#valueToken').val();
+    App.SimpleTokenCoin.transfer(toSend, valueToken, {from:App.account}).then(function() {
+      console.log("Токены отправляются");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Монеты успешно отправлены");
+    });
+  },
+
+  CrowdSale: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var CrowdsaleToken = $('#CrowdsaleToken').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.sendTransaction({from:App.account, value: web3.toWei(CrowdsaleToken, "ether")});
-    }).then(function(result) {
+    App.Crowdsale.sendTransaction({from:App.account, value:web3.toWei(CrowdsaleToken, "ether")}).then(function() {
       console.log("Токены покупаются");
+      App.Event = true;
       $('form').trigger('reset');
-      $('#successCrowdsale').text("Токены успешно куплены");
-    })
+      $('input').val('');
+      $('#success').text("Токены успешно куплены");
+    });
   },
 
-  initEditRate: function() {
+  EditRate: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var newRate = $('#newRate').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.rateEdit(newRate);
-    }).then(function(result) {
-      $('#successEditRate').text("Коэффициент успешно изменен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.Crowdsale.rateEdit(newRate).then(function() {
+      console.log("Rate изменен");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Коэффициент успешно изменен");
     });
   },
 
-  initEditOwner: function() {
+  EditOwner: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var newOwner = $('#newOwner').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.transferOwnership(newOwner);
-    }).then(function(result) {
-      $('#successEditOwner').text("Владелец контракта успешно изменен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.transferOwnership(newOwner).then(function() {
+      console.log("Владелец меняется");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Владелец контракта токена успешно изменен");
     });
   },
 
-  initEditHardcap: function() {
+  EditHardcap: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var newHardcap = $('#newHardcap').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.hardcapEdit(web3.toWei(newHardcap, "ether"));
-    }).then(function(result) {
-      $('#successEditHardcap').text("Hardcap успешно изменен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.Crowdsale.hardcapEdit(web3.toWei(newHardcap, "ether")).then(function() {
+      console.log("HacdCap меняется");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Hardcap успешно изменен");
     });
   },
 
-  initEditMultisig: function() {
+  EditMultisig: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var newMultisig = $('#newMultisig').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.multisigEdit(newMultisig);
-    }).then(function(result) {
-      $('#successEditMultisig').text("Адрес успешно изменен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.Crowdsale.multisigEdit(newMultisig).then(function(result) {
+      console.log("Адрес меняется");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Адрес успешно изменен");
     });
   },
 
-  initApprov: function() {
+  Approv: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var approveSpender = $('#approveSpender').val();
     var approveValue = $('#approveValue').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.approve(approveSpender, approveValue, {from:App.account});
-    }).then(function(result) {
-      $('#successApprove').text("Управление передано");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.approve(approveSpender, approveValue, {from:App.account}).then(function() {
+      console.log("Управление токенами передается");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Управление передано");
     });
   },
 
-  initApprovMoney: function() {
+  ApprovMoney: function() {
     var approveSpender = $('#approveMoney').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.allowance(App.account, approveSpender);
-    }).then(function(result) {
-      $('#resultApproveMoney').text(result + " монет в управлении");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.allowance(App.account, approveSpender).then(function(result) {
+      $('#resultApproveMoney').text("В управлении - " + result + " " + App.TokenSymbol);
     });
   },
 
-  initSendTransferFrom: function() {
+  SendTransferFrom: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var fromSend = $('#transferFrom').val();  
     var toSend = $('#transferTo').val();
     var valueToken = $('#transferFromValue').val(); 
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.transferFrom(fromSend, toSend, valueToken, {from:App.account});
-    }).then(function(result) {
-      $('#successTransferFrom').text("Монеты успешно отправлены на кошелек");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.transferFrom(fromSend, toSend, valueToken, {from:App.account}).then(function() {
+      console.log("Монеты отправляются");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Монеты успешно отправлены");
     });
   },
 
-  initUpLimitApprove: function() {
+  UpLimitApprove: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var approveSpender = $('#upLimitApproveSpender').val();
     var approveValue = $('#upLimitApproveValue').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.increaseApproval(approveSpender, approveValue, {from:App.account});
-    }).then(function(result) {
-      $('#successUpLimitApprove').text("Лимит успешно увеличен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.increaseApproval(approveSpender, approveValue, {from:App.account}).then(function() {
+      console.log("Лимит увеличивается");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Лимит успешно увеличен");
     });
   },
 
-  initDownLimitApprove: function() {
+  DownLimitApprove: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var approveSpender = $('#downLimitApproveSpender').val();
     var approveValue = $('#downLimitApproveValue').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.decreaseApproval(approveSpender, approveValue, {from:App.account});
-    }).then(function(result) {
-      $('#successDownLimitApprove').text("Лимит успешно уменьшен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.SimpleTokenCoin.decreaseApproval(approveSpender, approveValue, {from:App.account}).then(function() {
+      console.log("Лимит уменьшается");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Лимит успешно уменьшен");
     });
   },
 
-  initEditPeriod: function() {
+  EditPeriod: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
     var newPeriod = $('#newPeriod').val();
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.upPeriodEdit(newPeriod);
-    }).then(function(result) {
-        $('#successEditPeriod').text("Период успешно изменен");
-    }).catch(function(err) {
-      console.log(err.message);
+    App.Crowdsale.upPeriodEdit(newPeriod).then(function(result) {
+      console.log("Период меняется");
+      App.Event = true;
+      $('input').val('');
+      $('#success').text("Период успешно изменен");
     });
   },
 
-  initFinishMint: function() {
-    App.contracts.Crowdsale.deployed().then(function(instance) {
-      return instance.finishMint();
-    }).then(function() {
-      $('#successFinishMint').text("ISO успешно завершено!");
+  FinishMint: function() {
+    var loader =  $('#loader');
+    var content = $('#content');
+    loader.show();
+    content.hide();
+    App.Crowdsale.finishMint().then(function() {
+      console.log("ISO Закончилось!");
+      App.Event = true;
+      App.FinishMint = true;
+      $('#success').text("ISO успешно завершено!");
     }).catch(function(err) {
       console.log(err.message);
     });
@@ -339,50 +440,6 @@ App = {
 $(function() {
   $(window).load(function() {
     App.initWeb3();
-  });
-  $('#but').on('click', function() {
-    App.initBalance();
-  });
-  $('#mintToken').on('click', function() {
-    App.initMint();
-  });
-  $('#sendToken').on('click', function() {
-    App.initSendToken();
-  });
-
-  $('#editRateButton').on('click', function() {
-    App.initEditRate();
-  });
-  $('#editOwnerButton').on('click', function() {
-    App.initEditOwner();
-  });
-  $('#editHardcapButton').on('click', function() {
-    App.initEditHardcap();
-  });
-  $('#editMultisigrButton').on('click', function() {
-    App.initEditMultisig();
-  });
-
-  $('#sendApprove').on('click', function() {
-    App.initApprov();
-  });
-  $('#sendApproveMoney').on('click', function() {
-    App.initApprovMoney();
-  });
-  $('#sendTransferFrom').on('click', function() {
-    App.initSendTransferFrom();
-  });
-  $('#sendUpLimitApprove').on('click', function() {
-    App.initUpLimitApprove();
-  });
-  $('#sendDownLimitApprove').on('click', function() {
-    App.initDownLimitApprove();
-  });
-  $('#finishMint').on('click', function() {
-    App.initFinishMint();
-  });
-  $('#editPeriodButton').on('click', function() {
-    App.initEditPeriod();
   });
 });
 
@@ -412,6 +469,20 @@ function tokenConvertBonus (valueToken) {
   document.getElementById("CrowdsaleBonusToken").value=valueToken*bonus/100;
 }
 
+// Счетчик обратного отсчета
+
+function getEndTimeISO(_start, _period){
+  var startTimeIso = new Date(timeConverter(_start));
+  var endTimeIso = new Date();
+  var period = _period.toNumber();
+  endTimeIso.setDate(startTimeIso.getDate() + period);
+  endTimeIso.setMonth(endTimeIso.getMonth() - 1); 
+  endTimeIso.setHours(0);
+  endTimeIso.setMinutes(0);
+  endTimeIso.setSeconds(0);
+  initializeClock('endTimeIso', endTimeIso);
+}
+
 function timeConverter(UNIX_timestamp){
   var a = new Date(UNIX_timestamp * 1000);
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -425,13 +496,26 @@ function timeConverter(UNIX_timestamp){
   return time;
 }
 
-function getEndTimeISO(_start, _period){
-  var endTimeIso = new Date();
-  var startTimeIso = new Date(timeConverter(_start));
-  var period = _period.toNumber();
-  endTimeIso.setDate(startTimeIso.getDate() + period);
-  
-  initializeClock('endTimeIso', endTimeIso);
+function initializeClock(id, endtime){
+  var clock = document.getElementById(id);
+  var daysSpan = clock.querySelector('.days');
+  var hoursSpan = clock.querySelector('.hours');
+  var minutesSpan = clock.querySelector('.minutes');
+  var secondsSpan = clock.querySelector('.seconds');
+
+  function updateClock(){
+    var t = getTimeRemaining(endtime);
+    daysSpan.innerHTML = t.days;
+    hoursSpan.innerHTML = t.hours;
+    minutesSpan.innerHTML = t.minutes;
+    secondsSpan.innerHTML = t.seconds;
+    //console.log("Дни: " + t.days + "Часы: " + t.hours + "Минуты: " + t.minutes + "Секунды: " + t.seconds);
+    if(t.total<=0){
+      clearInterval(timeinterval);
+    }
+  }
+  updateClock(); // запустите функцию один раз, чтобы избежать задержки
+  var timeinterval = setInterval(updateClock, 1000);
 }
 
 function getTimeRemaining(endtime){
@@ -447,27 +531,4 @@ function getTimeRemaining(endtime){
    'minutes': minutes,
    'seconds': seconds
   };
-}
-
-function initializeClock(id, endtime){
-  var clock = document.getElementById(id);
-
-  var daysSpan = clock.querySelector('.days');
-  var hoursSpan = clock.querySelector('.hours');
-  var minutesSpan = clock.querySelector('.minutes');
-  var secondsSpan = clock.querySelector('.seconds');
-
-  function updateClock(){
-    var t = getTimeRemaining(endtime);
-    
-    daysSpan.innerHTML = t.days;
-    hoursSpan.innerHTML = t.hours;
-    minutesSpan.innerHTML = t.minutes;
-    secondsSpan.innerHTML = t.seconds;
-    if(t.total<=0){
-      clearInterval(timeinterval);
-    }
-  }
-  updateClock(); // запустите функцию один раз, чтобы избежать задержки
-  var timeinterval = setInterval(updateClock,1000);
 }

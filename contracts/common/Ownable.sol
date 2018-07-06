@@ -8,6 +8,7 @@ pragma solidity ^0.4.23;
  */
 contract Ownable {
   address public owner;
+  address public admin;
 
 
   event OwnershipRenounced(address indexed previousOwner);
@@ -23,13 +24,14 @@ contract Ownable {
    */
   constructor() public {
     owner = msg.sender;
+    admin = msg.sender;
   }
 
   /**
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender == owner || msg.sender == admin)
     _;
   }
 
@@ -62,7 +64,7 @@ contract Ownable {
     owner = _newOwner;
   }
 
-  function whoOwner() public view returns (address) {
-    return owner;
+  function whoOwner() public view returns (address, address) {
+    return (owner, admin);
   }
 }

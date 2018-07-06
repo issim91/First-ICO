@@ -4,17 +4,13 @@ import "./MintableToken.sol";
 
 contract SimpleTokenCoin is MintableToken {
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+    string public constant name = "Crypto Iluha Coin";
 
-    constructor () public {
-        name = "Crypto Iluha Coin";
-        symbol = "CIC";
-        decimals = 0;
-    }
+    string public constant symbol = "CIC";
 
-    function viewToken () public view returns (string, string, uint8) {
+    uint32 public constant decimals = 0;
+
+    function viewToken () public view returns (string, string, uint32) {
         return (name, symbol, decimals);
-    }
+    }   
 }

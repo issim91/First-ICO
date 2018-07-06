@@ -14,7 +14,7 @@ contract BasicToken {
   event Transfer(address indexed from, address indexed to, uint256 value);
   mapping(address => uint256) balances;
 
-  uint256 public totalSupply_ = 0;
+  uint256 totalSupply_;
 
   /**
   * @dev Total number of tokens in existence
@@ -46,5 +46,4 @@ contract BasicToken {
   function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
-
 }

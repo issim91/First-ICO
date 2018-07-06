@@ -1,12 +1,17 @@
 pragma solidity ^0.4.23;
 
 import "../token/SimpleTokenCoin.sol";
+import "../common/Ownable.sol";
+import "../common/SafeMath.sol";
 
-contract Crowdsale is SimpleTokenCoin {
+contract Crowdsale is Ownable {
+    using SafeMath for uint256;
+
+    SimpleTokenCoin public token;
 
     address owner;
     
-    uint256 rate = 1000000;
+    uint256 rate = 10000;
 
     uint hardcap;
 
@@ -16,9 +21,9 @@ contract Crowdsale is SimpleTokenCoin {
 
     address restricted;
 
-    uint start = 1529612747; // 22.06.2018
+    uint start = 1529625600; // 22.06.2018
 
-    uint period = 40;
+    uint period = 61;
 
     uint bonusTime1 = 10;
 
@@ -27,6 +32,7 @@ contract Crowdsale is SimpleTokenCoin {
     uint bonusTime3 = 25;
 
     event Sell (address _bayer, uint _amount);
+    event EditIso (address _sender);
 
     modifier saleIsOn() {
     	require(now > start && now < start + period * 1 days);
@@ -38,8 +44,9 @@ contract Crowdsale is SimpleTokenCoin {
         _;
     }
 
-    constructor () public {
+    constructor (SimpleTokenCoin _token) public {
         owner = msg.sender;
+        token = _token;
         multisig = 0xA44F8B54B522b21889496309BaC1B42Ff43c8e1F;
         hardcap = 200 ether;
         restricted = 0xa03d2BF2c49a6be202AE21f541e487687Fe008a3;
@@ -62,15 +69,16 @@ contract Crowdsale is SimpleTokenCoin {
           bonusTokens = tokens.div(20);
         }
         tokens += bonusTokens;
-        mint(msg.sender, tokens);
         emit Sell(msg.sender, msg.value);
+        token.mint(msg.sender, tokens);
+        
     }
 
     function finishMint() public onlyOwner {
-        uint issuedTokenSupply = totalSupply();
+        uint issuedTokenSupply = token.totalSupply();
         uint restrictedTokens = issuedTokenSupply.mul(restrictedPercent).div(100 - restrictedPercent);
-        mint(restricted, restrictedTokens);
-        finishMinting();
+        token.mint(restricted, restrictedTokens);
+        token.finishMinting();
     }
 
     function viewISO () public view returns (uint256, address, uint, address, uint, uint, uint) {
@@ -78,27 +86,33 @@ contract Crowdsale is SimpleTokenCoin {
     }
 
     function rateEdit (uint256 newRate) public onlyOwner {
-        rate = newRate;        
+        rate = newRate;
+        emit EditIso (msg.sender);
     }
 
     function multisigEdit (address newMultisig) public onlyOwner {
-        multisig = newMultisig;        
+        multisig = newMultisig;
+        emit EditIso (msg.sender);
     }
 
     function hardcapEdit (uint newHardcap) public onlyOwner {
-        hardcap = newHardcap;       
+        hardcap = newHardcap;
+        emit EditIso (msg.sender);
     }
 
     function restrictedEdit (address newRestricted) public onlyOwner {
-        restricted = newRestricted;       
+        restricted = newRestricted;
+        emit EditIso (msg.sender);
     }
 
     function restrictedPercentEdit (uint newRestrictedPercent) public onlyOwner {
-        restrictedPercent = newRestrictedPercent;       
+        restrictedPercent = newRestrictedPercent;
+        emit EditIso (msg.sender);
     }
 
     function upPeriodEdit (uint newPeriod) public onlyOwner {
-        period = period + newPeriod;       
+        period = period + newPeriod;
+        emit EditIso (msg.sender);
     }
 
     function viewBonusTokens () public view returns(uint) {        
@@ -111,5 +125,4 @@ contract Crowdsale is SimpleTokenCoin {
         } else
         return 0;
     }
-
 }
